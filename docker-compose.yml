@@ -1,0 +1,48 @@
+services:
+  frontend:
+    hostname: frontend
+    ports:
+      - 80:5000
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    read_only: true
+    restart: always
+    cap_drop:
+      - all
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+  # infra stuff
+  kafka:
+    image: up9inc/mockintosh:self-contained-kafka
+    hostname: kafka
+    restart: always
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+    cap_drop:
+      - all
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+  rabbitmq:
+    image: rabbitmq:3.6.8
+    hostname: rabbitmq
+    restart: always
+    cap_drop:
+      - all
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    read_only: true
+
+version: "3"
