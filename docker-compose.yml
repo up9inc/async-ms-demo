@@ -7,7 +7,7 @@ services:
       context: frontend
       dockerfile: Dockerfile
     read_only: true
-    restart: always
+    restart: no
     cap_drop:
       - all
     cap_add:
@@ -16,14 +16,19 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
+    environment:
+      KAFKA: kafka:9092
 
   # infra stuff
   kafka:
-    image: up9inc/mockintosh:self-contained-kafka
+    build:
+      context: kafka
     hostname: kafka
-    restart: always
+    restart: no
+    #expose:
+    #  - "9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
     cap_drop:
       - all
     cap_add:
@@ -31,18 +36,5 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
-
-  rabbitmq:
-    image: rabbitmq:3.6.8
-    hostname: rabbitmq
-    restart: always
-    cap_drop:
-      - all
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - DAC_OVERRIDE
-    read_only: true
 
 version: "3"
