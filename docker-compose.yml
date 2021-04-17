@@ -18,6 +18,14 @@ services:
       - DAC_OVERRIDE
     environment:
       KAFKA: kafka:9092
+  manager:
+    hostname: manager
+    build:
+      context: manager
+    read_only: true
+    restart: "no"
+    environment:
+      KAFKA: kafka:9092
 
   # infra stuff
   kafka:

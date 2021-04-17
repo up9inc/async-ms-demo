@@ -19,7 +19,7 @@ def produce(queue, key, val, headers=None):
 
 @app.route('/', methods=('get',))
 def root():
-    produce("test", "mykey", "myval")
+    produce("frontend-jobs", "mykey", "myval")
     return send_file("spa.html")
 
 
