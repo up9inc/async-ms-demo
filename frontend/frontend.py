@@ -12,11 +12,9 @@ producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:909
 def produce(queue, key, val, headers=None):
     logging.info("Producing into %s: %s %s", queue, key, val)
     producer.poll(0)
-    producer.produce(queue, key=key, value=val, headers=headers)
+    log_status = lambda x, y: logging.info("Done producing: %s %s", x, y)
+    producer.produce(queue, key=key, value=val, headers=headers, on_delivery=log_status)
     producer.flush()
-
-
-produce("test", "mykey", "myval")
 
 
 @app.route('/', methods=('get',))
