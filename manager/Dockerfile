@@ -1,6 +1,6 @@
 FROM python
 
-RUN pip install confluent-kafka
+RUN pip install confluent-kafka pika
 
 ADD manager.py ./
 

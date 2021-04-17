@@ -44,5 +44,17 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
+  rabbitmq:
+    image: rabbitmq
+    hostname: rabbitmq
+    restart: "no"
+    cap_drop:
+      - all
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    read_only: true
 
 version: "3"

@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 from confluent_kafka import Producer
 from flask import Flask, send_file
@@ -19,7 +20,7 @@ def produce(queue, key, val, headers=None):
 
 @app.route('/', methods=('get',))
 def root():
-    produce("frontend-jobs", "mykey", "myval")
+    produce("frontend-jobs", "fe-%s" % time.time(), "myval-%s" % time.time())
     return send_file("spa.html")
 
 

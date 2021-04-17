@@ -2,9 +2,21 @@ import logging
 import os
 import time
 
+import pika
 from confluent_kafka import Consumer
 
-TOPIC = "frontend-jobs"
+TOPIC_JOBS_IN = "frontend-jobs"
+QUEUE_RMQ_OUT = "grayscaler-job"
+
+rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(os.environ.get('RABBITMQ', 'localhost')))
+rmq_channel = rmq_conn.channel()
+rmq_channel.queue_declare(queue=QUEUE_RMQ_OUT)
+jobs_in_progress = {}
+
+
+def _process_job(key, val):
+    logging.info("Sending job into RedisMQ: %s", key)
+    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=val)
 
 
 def main():
@@ -14,10 +26,10 @@ def main():
         'auto.offset.reset': 'earliest'  # earliest _committed_ offset
     })
 
-    _wait_for_topic_to_exist(consumer, TOPIC)
+    _wait_for_topic_to_exist(consumer, TOPIC_JOBS_IN)
 
-    logging.info("Subscribing to topic: %s", TOPIC)
-    consumer.subscribe([TOPIC])
+    logging.info("Subscribing to topic: %s", TOPIC_JOBS_IN)
+    consumer.subscribe([TOPIC_JOBS_IN])
 
     while True:
         logging.debug("Waiting for messages...")
@@ -27,11 +39,13 @@ def main():
             logging.warning("Poll timed out")
             break
 
-        logging.info("Consuming message: %r %r", msg.key(), msg.value())
+        logging.info("Consuming message: %r", msg)
 
         if msg.error():
             logging.warning("Consumer error: {}".format(msg.error()))
             continue
+
+        _process_job(msg.key(), msg.value())
 
         consumer.commit()
 
@@ -55,3 +69,4 @@ if __name__ == '__main__':
                         format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
 
     main()
+    rmq_conn.close()
