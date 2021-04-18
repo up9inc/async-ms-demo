@@ -41,8 +41,10 @@
         let url = "/result?key=" + $("body").data("key");
         $.get(url).done(function (data, textStatus, xhr) {
             if (xhr.status === 200) {
-                $("body").append("<img src='" + url + "' alt=''/>");
-                btn.attr('disabled', null);
+                $(".container-fluid").append("<hr/>");
+                $(".container-fluid").append("<h2 class='mx-auto d-block'>Result:</h2>");
+                $(".container-fluid").append("<img src='" + url + "' alt='' class='img-fluid img-thumbnail rounded mx-auto d-block'/>");
+                $("input[type=submit]").attr('disabled', null);
             } else {
                 window.setTimeout(wait_for_result, 250);
             }
@@ -74,7 +76,6 @@
                     btn.attr('disabled', null);
                 }
             });
-
         });
     });
 </script>
