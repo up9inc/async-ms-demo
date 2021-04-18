@@ -2,8 +2,9 @@ import logging
 import os
 import time
 
+from PIL import Image
 from confluent_kafka import Producer
-from flask import Flask, send_file
+from flask import Flask, send_file, jsonify, request
 
 app = Flask(__name__)
 
@@ -25,10 +26,12 @@ def root():
 
 @app.route('/', methods=('post',))
 def post():
+    image = Image.open(request.files['file'].stream).convert("RGB")
+
     key = "fe-%s" % time.time()
     logging.info("Starting job: %s", key)
     produce("manager-jobs", key, "myval-%s" % time.time())
-    return send_file("spa.html")
+    return jsonify(key)
 
 
 if __name__ == '__main__':
