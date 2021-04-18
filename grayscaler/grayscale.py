@@ -3,6 +3,7 @@ import os
 import time
 
 import pika
+from pika import BasicProperties
 from pika.exceptions import AMQPConnectionError
 
 QUEUE_RMQ_IN = "grayscaler-job"
@@ -31,11 +32,13 @@ def main():
 
 def callback(ch, method, properties, body):
     logging.info("Received %r %r %r %r", ch, method, properties, body)
+    key = properties.headers.get('key')
 
     body = body.decode('ascii')[::-1].encode('ascii')
 
-    logging.info("Sending result back into RabbitMQ")
-    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=body)
+    logging.info("Sending result back into RabbitMQ: %s", key)
+    props = BasicProperties(headers={"key": key})
+    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=body, properties=props)
 
 
 if __name__ == '__main__':

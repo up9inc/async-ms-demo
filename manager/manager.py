@@ -4,6 +4,7 @@ import time
 
 import pika
 from confluent_kafka import Consumer
+from pika import BasicProperties
 from pika.exceptions import AMQPConnectionError
 
 TOPIC_JOBS_IN = "frontend-jobs"
@@ -25,7 +26,8 @@ jobs_in_progress = {}
 
 def _process_job(key, val):
     logging.info("Sending job into RedisMQ: %s", key)
-    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=val)
+    props = BasicProperties(headers={"key": key})
+    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=val, properties=props)
 
 
 def main():
