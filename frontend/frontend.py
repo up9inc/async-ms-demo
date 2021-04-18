@@ -11,21 +11,23 @@ producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:909
 
 
 def produce(queue, key, val, headers=None):
-    logging.info("Producing into %s: %s %s", queue, key, val)
+    logging.debug("Producing into %s: %s %s", queue, key, val)
     producer.poll(0)
-    log_status = lambda x, y: logging.info("Done producing: %s %s", x, y)
+    log_status = lambda x, y: logging.debug("Done producing: %s %s", x, y)
     producer.produce(queue, key=key, value=val, headers=headers, on_delivery=log_status)
     producer.flush()
 
 
 @app.route('/', methods=('get',))
 def root():
-    produce("frontend-jobs", "fe-%s" % time.time(), "myval-%s" % time.time())
     return send_file("spa.html")
 
 
 @app.route('/', methods=('post',))
 def post():
+    key = "fe-%s" % time.time()
+    logging.info("Starting job: %s", key)
+    produce("manager-jobs", key, "myval-%s" % time.time())
     return send_file("spa.html")
 
 
