@@ -19,13 +19,20 @@ services:
     environment:
       KAFKA: kafka:9092
   manager:
-    hostname: manager
     build:
       context: manager
     read_only: true
     restart: "no"
     environment:
       KAFKA: kafka:9092
+      RABBITMQ: rabbitmq
+  grayscaler:
+    build:
+      context: grayscaler
+    read_only: true
+    restart: "no"
+    environment:
+      RABBITMQ: rabbitmq
 
   # infra stuff
   kafka:
@@ -55,6 +62,5 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
-    read_only: true
 
 version: "3"

@@ -4,11 +4,20 @@ import time
 
 import pika
 from confluent_kafka import Consumer
+from pika.exceptions import AMQPConnectionError
 
 TOPIC_JOBS_IN = "frontend-jobs"
 QUEUE_RMQ_OUT = "grayscaler-job"
 
-rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(os.environ.get('RABBITMQ', 'localhost')))
+while True:
+    try:
+        rmq_conn = pika.BlockingConnection(
+            pika.ConnectionParameters(os.environ.get('RABBITMQ', 'localhost'), heartbeat=60))
+        break
+    except AMQPConnectionError:
+        logging.warning("Failed to connect to RabbitMQ")
+        time.sleep(1)
+
 rmq_channel = rmq_conn.channel()
 rmq_channel.queue_declare(queue=QUEUE_RMQ_OUT)
 jobs_in_progress = {}
