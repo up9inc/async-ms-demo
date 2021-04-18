@@ -1,8 +1,10 @@
+import io
 import logging
 import os
 import time
 from threading import Thread
 
+from PIL import Image
 from confluent_kafka import Consumer, Producer
 
 producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"), "message.send.max.retries": 2})
@@ -20,14 +22,6 @@ def fetch_results():
     run_consumer("grayscaler-result", callback)
 
 
-def result_if_ready(key):
-    item = jobs_in_progress[key]
-    if "grayscale" in item:
-        final_result = item['orig'] + item['grayscale']  # TODO
-        logging.info("Result is ready, sending it into Kafka: %s", key)
-        producer.produce("manager-results", key=key, value=final_result)
-
-
 def callback(msg):
     key = msg.key()
     if key not in jobs_in_progress:
@@ -35,6 +29,21 @@ def callback(msg):
         return
     jobs_in_progress[key]["grayscale"] = msg.value()
     result_if_ready(key)
+
+
+def result_if_ready(key):
+    item = jobs_in_progress[key]
+    if "grayscale" in item:
+        img = Image.open(io.BytesIO(item['orig']))
+        gray = Image.open(io.BytesIO(item['grayscale']))
+        img.paste(gray.crop((gray.width // 2, 0, gray.width, gray.height)), (img.width // 2, 0))
+
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+
+        logging.info("Result is ready, sending it into Kafka: %s", key)
+        producer.produce("manager-results", key=key, value=img_byte_arr)
 
 
 def run_consumer(queue, msg_handler):

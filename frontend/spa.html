@@ -37,6 +37,19 @@
 -->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script>
+    function wait_for_result() {
+        let url = "/result?key=" + $("body").data("key");
+        $.get(url).done(function (data, textStatus, xhr) {
+            if (xhr.status === 200) {
+                $("body").append("<img src='" + url + "' alt=''/>");
+            } else {
+                window.setTimeout(wait_for_result, 250);
+            }
+        }).fail(function () {
+            alert("failed to get result");
+        });
+    }
+
     $(function () {
         let btn = $("input[type=submit]");
         btn.click(function () {
@@ -52,7 +65,8 @@
                 method: 'POST',
                 type: 'POST', // For jQuery < 1.9
                 success: function (data) {
-                    alert(data);
+                    $("body").data("key", data);
+                    wait_for_result();
                 },
                 error: function () {
                     alert("failed")

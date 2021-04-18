@@ -1,7 +1,9 @@
+import io
 import logging
 import os
 import time
 
+from PIL import Image
 from confluent_kafka import Consumer, Producer
 
 producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"), "message.send.max.retries": 2})
@@ -51,11 +53,15 @@ def _wait_for_topic_to_exist(consumer, topic):
 
 def callback(msg):
     key = msg.key()
-    body = msg.value()
-    body = body.decode('ascii')[::-1].encode('ascii')
+
+    image = Image.open(io.BytesIO(msg.value())).convert("L").convert('RGB')
+
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
 
     logging.info("Sending result back into RabbitMQ: %s", key)
-    producer.produce("grayscaler-result", key=key, value=body)
+    producer.produce("grayscaler-result", key=key, value=img_byte_arr)
 
 
 if __name__ == '__main__':
