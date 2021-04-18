@@ -42,6 +42,7 @@
         $.get(url).done(function (data, textStatus, xhr) {
             if (xhr.status === 200) {
                 $("body").append("<img src='" + url + "' alt=''/>");
+                btn.attr('disabled', null);
             } else {
                 window.setTimeout(wait_for_result, 250);
             }
