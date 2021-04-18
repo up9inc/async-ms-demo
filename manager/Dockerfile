@@ -1,6 +1,6 @@
 FROM python
 
-RUN pip install pillow confluent-kafka pika
+RUN pip install pillow confluent-kafka
 
 ADD manager.py ./
 

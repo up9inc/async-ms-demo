@@ -25,14 +25,13 @@ services:
     restart: "no"
     environment:
       KAFKA: kafka:9092
-      RABBITMQ: rabbitmq
   grayscaler:
     build:
       context: grayscaler
     read_only: true
     restart: "no"
     environment:
-      RABBITMQ: rabbitmq
+      KAFKA: kafka:9092
 
   # infra stuff
   kafka:
@@ -40,21 +39,8 @@ services:
       context: kafka
     hostname: kafka
     restart: "no"
-    #expose:
-    #  - "9092"
     environment:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-    cap_drop:
-      - all
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - DAC_OVERRIDE
-  rabbitmq:
-    image: rabbitmq
-    hostname: rabbitmq
-    restart: "no"
     cap_drop:
       - all
     cap_add:

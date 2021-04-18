@@ -3,51 +3,21 @@ import os
 import time
 from threading import Thread
 
-import pika
 from confluent_kafka import Consumer, Producer
-from pika import BasicProperties
-from pika.exceptions import AMQPConnectionError
-
-TOPIC_JOBS_IN = "manager-jobs"
-QUEUE_RMQ_OUT = "grayscaler-job"
-
-
-def get_rmq_conn():
-    while True:
-        try:
-            rmq_conn = pika.BlockingConnection(
-                pika.ConnectionParameters(os.environ.get('RABBITMQ', 'localhost'), heartbeat=60))
-            break
-        except AMQPConnectionError:
-            logging.warning("Failed to connect to RabbitMQ")
-            time.sleep(1)
-    return rmq_conn
-
 
 producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"), "message.send.max.retries": 2})
 
 jobs_in_progress = {}
 
 
-def assign_jobs(key, val, rmq_channel):
+def assign_jobs(key, val):
     logging.info("Sending job into RedisMQ: %s", key)
-
     jobs_in_progress[key] = {"orig": val, "created": time.time()}
-
-    props = BasicProperties(headers={"key": key})
-    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=val, properties=props)
+    producer.produce("grayscaler-job", key=key, value=val)
 
 
 def fetch_results():
-    result_queue = "grayscaler-result"
-    rmq_conn = get_rmq_conn()
-    rmq_channel = rmq_conn.channel()
-    rmq_channel.queue_declare(queue=result_queue)
-    rmq_channel.basic_consume(queue=result_queue,
-                              auto_ack=True,
-                              on_message_callback=callback)
-    logging.info("Waiting for input messages...")
-    rmq_channel.start_consuming()
+    run_consumer("grayscaler-result", callback)
 
 
 def result_if_ready(key):
@@ -55,34 +25,32 @@ def result_if_ready(key):
     if "grayscale" in item:
         final_result = item['orig'] + item['grayscale']  # TODO
         logging.info("Result is ready, sending it into Kafka: %s", key)
-        producer.produce("manager-results", key, final_result)
+        producer.produce("manager-results", key=key, value=final_result)
 
 
-def callback(ch, method, properties, body):
-    logging.info("Received %r %r %r %r", ch, method, properties, body)
-    key = properties.headers.get('key')
-    jobs_in_progress[key]["grayscale"] = body
+def callback(msg):
+    key = msg.key()
+    if key not in jobs_in_progress:
+        logging.warning("Key not found in active jobs: %s", key)
+        return
+    jobs_in_progress[key]["grayscale"] = msg.value()
     result_if_ready(key)
 
 
-def main():
+def run_consumer(queue, msg_handler):
     consumer = Consumer({
         'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"),
         'group.id': 'manager',
         'auto.offset.reset': 'earliest'  # earliest _committed_ offset
     })
 
-    rmq_conn = get_rmq_conn()
-    rmq_channel = rmq_conn.channel()
-    rmq_channel.queue_declare(queue=QUEUE_RMQ_OUT)
+    _wait_for_topic_to_exist(consumer, queue)
 
-    _wait_for_topic_to_exist(consumer, TOPIC_JOBS_IN)
-
-    logging.info("Subscribing to topic: %s", TOPIC_JOBS_IN)
-    consumer.subscribe([TOPIC_JOBS_IN])
+    logging.info("Subscribing to topic: %s", queue)
+    consumer.subscribe([queue])
 
     while True:
-        logging.debug("Waiting for messages...")
+        logging.debug("Waiting for messages in %r...", queue)
         msg = consumer.poll()
 
         if msg is None:
@@ -95,12 +63,16 @@ def main():
             logging.warning("Consumer error: {}".format(msg.error()))
             continue
 
-        assign_jobs(msg.key(), msg.value(), rmq_channel)
+        msg_handler(msg)
 
         consumer.commit()
 
-    logging.info("Closing consumer")
-    consumer.close()
+
+def main():
+    def handler(msg):
+        assign_jobs(msg.key(), msg.value())
+
+    run_consumer("manager-jobs", handler)
 
 
 def _wait_for_topic_to_exist(consumer, topic):

@@ -2,47 +2,64 @@ import logging
 import os
 import time
 
-import pika
-from pika import BasicProperties
-from pika.exceptions import AMQPConnectionError
+from confluent_kafka import Consumer, Producer
 
-QUEUE_RMQ_IN = "grayscaler-job"
-QUEUE_RMQ_OUT = "grayscaler-result"
-
-while True:
-    try:
-        rmq_conn = pika.BlockingConnection(
-            pika.ConnectionParameters(os.environ.get('RABBITMQ', 'localhost'), heartbeat=60))
-        break
-    except AMQPConnectionError:
-        logging.warning("Failed to connect to RabbitMQ")
-        time.sleep(1)
-
-rmq_channel = rmq_conn.channel()
-rmq_channel.queue_declare(queue=QUEUE_RMQ_IN)
+producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"), "message.send.max.retries": 2})
 
 
-def main():
-    rmq_channel.basic_consume(queue=QUEUE_RMQ_IN,
-                              auto_ack=True,
-                              on_message_callback=callback)
-    logging.info("Waiting for input messages...")
-    rmq_channel.start_consuming()
+def run_consumer(queue, msg_handler):
+    consumer = Consumer({
+        'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"),
+        'group.id': 'manager',
+        'auto.offset.reset': 'earliest'  # earliest _committed_ offset
+    })
+
+    _wait_for_topic_to_exist(consumer, queue)
+
+    logging.info("Subscribing to topic: %s", queue)
+    consumer.subscribe([queue])
+
+    while True:
+        logging.debug("Waiting for messages in %r...", queue)
+        msg = consumer.poll()
+
+        if msg is None:
+            logging.warning("Poll timed out")
+            break
+
+        logging.info("Consuming Kafka message: %r", msg.key())
+
+        if msg.error():
+            logging.warning("Consumer error: {}".format(msg.error()))
+            continue
+
+        msg_handler(msg)
+
+        consumer.commit()
 
 
-def callback(ch, method, properties, body):
-    logging.info("Received %r %r %r %r", ch, method, properties, body)
-    key = properties.headers.get('key')
+def _wait_for_topic_to_exist(consumer, topic):
+    while True:
+        topics = consumer.list_topics(topic)  # promises to create topic
+        logging.debug("Topic state: %s", topics.topics)
+        if topics.topics[topic].error is None:
+            break
+        else:
+            logging.warning("Topic is not available: %s", topics.topics[topic].error)
+            time.sleep(1)
 
+
+def callback(msg):
+    key = msg.key()
+    body = msg.value()
     body = body.decode('ascii')[::-1].encode('ascii')
 
     logging.info("Sending result back into RabbitMQ: %s", key)
-    props = BasicProperties(headers={"key": key})
-    rmq_channel.basic_publish(exchange='', routing_key=QUEUE_RMQ_OUT, body=body, properties=props)
+    producer.produce("grayscaler-result", key=key, value=body)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO,
                         format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
 
-    main()
+    run_consumer("grayscaler-job", callback)

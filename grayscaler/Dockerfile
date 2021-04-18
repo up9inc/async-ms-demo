@@ -1,6 +1,6 @@
 FROM python
 
-RUN pip install pika pillow
+RUN pip install confluent-kafka pillow
 
 ADD grayscale.py ./
 
