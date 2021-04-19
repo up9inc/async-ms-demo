@@ -82,14 +82,14 @@ def post():
     return jsonify(key)
 
 
-results = {}
+results = {}  # TODO: time-based purging
 
 
 @app.route('/result', methods=('get',))
 def result():
     result = results.get(request.args.get('key'))
     if result:
-        return result
+        return Response(result, mimetype='image/png')
     else:
         return Response(status=204)
 

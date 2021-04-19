@@ -1,0 +1,17 @@
+management:
+  port: 8000
+services:
+  - name: Kafka Mock Actors
+    type: kafka
+    address: localhost:9092
+    actors:
+      - name: Job-Trigger
+        produce:
+          queue: grayscaler-job
+          key: job-{{date.timestamp}}
+          value: "@color_panel.png"
+
+      - name: Result-Validator
+        consume:
+          queue: grayscaler-result
+          capture: 5
