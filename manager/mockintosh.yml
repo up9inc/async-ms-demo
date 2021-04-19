@@ -1,0 +1,27 @@
+management:
+  port: 8000
+services:
+  - name: Kafka Mock Actors
+    type: kafka
+    address: localhost:9092
+    actors:
+
+      - name: Trigger-each-5s
+        delay: 5
+        produce:
+          queue: manager-jobs
+          key: "job-{{date.timestamp}}"
+          value: "@img_in.png"
+
+      - name: Grayscaler-Mocked
+        consume:
+          queue: grayscaler-job
+        produce:
+          queue: grayscaler-result
+          key: "{{consumed.key}}"
+          value: "@img_out.png"
+
+      - name: Manager-Results
+        consume:
+          queue: manager-results
+          capture: 10
