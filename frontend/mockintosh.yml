@@ -1,0 +1,16 @@
+management:
+  port: 8000
+services:
+  - name: Kafka Mock Actors
+    type: kafka
+    address: localhost:9092
+    actors:
+      - name: Reactive-Demo
+        consume:
+          queue: manager-jobs
+          capture: 10
+        delay: 1.5
+        produce:
+          queue: manager-results
+          key: "{{consumed.key}}"
+          value: "@color_panel.png"
