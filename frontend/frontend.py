@@ -34,7 +34,7 @@ def run_consumer(queue, msg_handler):
     consumer.subscribe([queue])
 
     while True:
-        logging.info("Waiting for messages in %r...", queue)
+        logging.debug("Waiting for messages in %r...", queue)
         msg = consumer.poll()
 
         if msg is None:
