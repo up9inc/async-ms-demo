@@ -9,7 +9,7 @@ services:
         consume:
           queue: manager-jobs
           capture: 10
-        delay: 1.5
+        delay: 0.5
         produce:
           queue: manager-results
           key: "{{consumed.key}}"

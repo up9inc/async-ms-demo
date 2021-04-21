@@ -31,14 +31,27 @@ To stop the application, press `Ctrl+C`.
 
 Navigate to `frontend` subfolder, and run there `docker-compose up`. 
 
-After it starts, open [http://localhost/](http://localhost/) in your browser
+After it starts, open [http://localhost/](http://localhost/) in your browser and try uploading some images. Note how the resulting image is the same each time, originating from Mockintosh's configuration.
 
-[http://localhost:8000/](http://localhost:8000/)
+Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka traffic log in Mockintosh UI.
 
 ## Running Job Manager Isolated
 
+Navigate to `manager` subfolder, and run there `docker-compose up`.
+
+Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka traffic log in Mockintosh UI. Notice that each 5 seconds the new job is triggered automatically by Mockintosh's "scheduled producer".
+
 ## Running Grayscaler Isolated
 
+Navigate to `grayscaler` subfolder, and run there `docker-compose up`.
+
+Run the automated test in parallel console like this:
+
+```shell
+pytest -v tests.py
+```
+
+Open [http://localhost:8000/](http://localhost:8000/) and enable traffic logging to see messages produced and consumed by Mockintosh while `pytest` is running. Additionally, trigger some jobs for Grayscaler from "Async Actors" tab in Mockintosh UI.
 
 ## Running Without `docker-compose`
 
