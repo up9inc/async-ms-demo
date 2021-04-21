@@ -21,17 +21,20 @@ docker-compose up
 
 The app will start up. You will see some warnings about topics not existing, this is normal because our Kafka is empty.
 
-Now open in your browser [http://localhost/](http://localhost/) to see the application. Then upload a colorful image via web form and wait for resulting image to appear. 
+Now open in your browser [http://localhost/](http://localhost/) to see the application. Then upload a colorful image via
+web form and wait for resulting image to appear.
 
-Upload more images to get more results. Notice that after the first result the Kafka topics have been created and there are no more log warnings. In the log, you can see messages about different services working with Kafka topics.
+Upload more images to get more results. Notice that after the first result the Kafka topics have been created and there
+are no more log warnings. In the log, you can see messages about different services working with Kafka topics.
 
 To stop the application, press `Ctrl+C`.
 
 ## Running Front-End Isolated
 
-Navigate to `frontend` subfolder, and run there `docker-compose up`. 
+Navigate to `frontend` subfolder, and run there `docker-compose up`.
 
-After it starts, open [http://localhost/](http://localhost/) in your browser and try uploading some images. Note how the resulting image is the same each time, originating from Mockintosh's configuration.
+After it starts, open [http://localhost/](http://localhost/) in your browser and try uploading some images. Note how the
+resulting image is the same each time, originating from Mockintosh's configuration.
 
 Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka traffic log in Mockintosh UI.
 
@@ -39,7 +42,8 @@ Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka tr
 
 Navigate to `manager` subfolder, and run there `docker-compose up`.
 
-Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka traffic log in Mockintosh UI. Notice that each 5 seconds the new job is triggered automatically by Mockintosh's "scheduled producer".
+Open [http://localhost:8000/](http://localhost:8000/) to see the mocked Kafka traffic log in Mockintosh UI. Notice that
+each 5 seconds the new job is triggered automatically by Mockintosh's "scheduled producer".
 
 ## Running Grayscaler Isolated
 
@@ -51,8 +55,19 @@ Run the automated test in parallel console like this:
 pytest -v tests.py
 ```
 
-Open [http://localhost:8000/](http://localhost:8000/) and enable traffic logging to see messages produced and consumed by Mockintosh while `pytest` is running. Additionally, trigger some jobs for Grayscaler from "Async Actors" tab in Mockintosh UI.
+Open [http://localhost:8000/](http://localhost:8000/) and enable traffic logging to see messages produced and consumed
+by Mockintosh while `pytest` is running. Additionally, trigger some jobs for Grayscaler from "Async Actors" tab in
+Mockintosh UI.
 
 ## Running Without `docker-compose`
 
-`docker run -d -it -p 9092:9092 up9inc/mockintosh:self-contained-kafka`
+All the microservices are runnable outside of `docker-compose`. You would need to have running Kafka on `localhost` to
+do so. Run it like this:
+
+```shell
+docker run -d -it -p 9092:9092 up9inc/mockintosh:self-contained-kafka
+```
+
+Each microservice is runnable with simple `python *.py` call from the corresponding subdirectory.
+
+Also, you can run microservices in isolation by running corresponding Mockintosh config like `mockintosh mockintosh.yml`.
