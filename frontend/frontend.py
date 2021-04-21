@@ -34,7 +34,7 @@ def run_consumer(queue, msg_handler):
     consumer.subscribe([queue])
 
     while True:
-        logging.debug("Waiting for messages in %r...", queue)
+        logging.info("Waiting for messages in %r...", queue)
         msg = consumer.poll()
 
         if msg is None:
@@ -75,6 +75,7 @@ def post():
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
     img_byte_arr = img_byte_arr.getvalue()
+    assert len(img_byte_arr) < 1024 * 1024, "Image size has to be smaller than 1MB"
 
     key = "fe-%s" % time.time()
     logging.info("Starting job: %s", key)
@@ -106,4 +107,4 @@ if __name__ == '__main__':
                         format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
     Thread(target=read_results).start()
 
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)

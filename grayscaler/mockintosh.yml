@@ -3,8 +3,9 @@ management:
 services:
   - name: Kafka Mock Actors
     type: kafka
-    address: localhost:9092
+    address: "{{env 'KAFKA' 'localhost:9092'}}"
     actors:
+
       - name: Job-Trigger
         produce:
           queue: grayscaler-job

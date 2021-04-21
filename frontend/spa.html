@@ -14,13 +14,20 @@
 <body>
 
 <div class="container-fluid">
-    <a href="/" class="float-end">Start Over</a>
-    <h1>Choose file for processing</h1>
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col-md-6">
+            <a href="/" class="float-end">Start Over</a>
+            <h1>Choose file for processing</h1>
 
-    <form method="post" enctype="multipart/form-data">
-        <input name="file" type="file" class="form-control">
-    </form>
-    <input type="submit" class="form-control btn btn-primary">
+            <form method="post" enctype="multipart/form-data">
+                <input name="file" type="file" class="form-control">
+            </form>
+            <input type="submit" class="form-control btn btn-primary">
+
+        </div>
+        <div class="col-md-3"></div>
+    </div>
 </div>
 
 <!-- Optional JavaScript; choose one of the two! -->
@@ -41,9 +48,10 @@
         let url = "/result?key=" + $("body").data("key");
         $.get(url).done(function (data, textStatus, xhr) {
             if (xhr.status === 200) {
-                $(".container-fluid").append("<hr/>");
-                $(".container-fluid").append("<h2 class='mx-auto d-block'>Result:</h2>");
-                $(".container-fluid").append("<img src='" + url + "' alt='' class='img-fluid img-thumbnail rounded mx-auto d-block'/>");
+                let cont = $(".container-fluid .row .col-md-6");
+                cont.append("<hr/>");
+                cont.append("<h2 class='mx-auto d-block'>Result:</h2>");
+                cont.append("<img src='" + url + "' alt='' class='img-fluid img-thumbnail rounded mx-auto d-block'/>");
                 $("input[type=submit]").attr('disabled', null);
             } else {
                 window.setTimeout(wait_for_result, 250);
