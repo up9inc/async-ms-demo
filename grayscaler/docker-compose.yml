@@ -1,0 +1,46 @@
+services:
+  grayscaler:
+    build:
+      context: .
+    read_only: true
+    restart: "no"
+    environment:
+      KAFKA: kafka:9092
+
+  mockintosh:
+    image: up9inc/mockintosh:unstable  # FIXME: use latest once released
+    read_only: true
+    restart: "no"
+    command: /config/mockintosh.yml
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/config
+    environment:
+      KAFKA: kafka:9092
+    cap_drop:
+      - all
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+  # infra stuff
+  kafka:
+    build:
+      context: ../kafka
+    hostname: kafka
+    restart: "no"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    cap_drop:
+      - all
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+version: "3.3"
