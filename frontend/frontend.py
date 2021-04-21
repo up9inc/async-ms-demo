@@ -10,6 +10,8 @@ from flask import Flask, send_file, jsonify, request, Response
 
 app = Flask(__name__)
 
+app.results = {}  # TODO: time-based purging
+
 producer = Producer({'bootstrap.servers': os.environ.get("KAFKA", "localhost:9092"), "message.send.max.retries": 2})
 
 
@@ -41,7 +43,7 @@ def run_consumer(queue, msg_handler):
             logging.warning("Poll timed out")
             break
 
-        logging.info("Consuming Kafka message: %r", msg.key())
+        logging.info("Consuming Kafka message in %r: %r", queue, msg.key())
 
         if msg.error():
             logging.warning("Consumer error: {}".format(msg.error()))
@@ -83,12 +85,10 @@ def post():
     return jsonify(key)
 
 
-results = {}  # TODO: time-based purging
-
-
 @app.route('/result', methods=('get',))
 def result():
-    result = results.get(request.args.get('key'))
+    key = request.args.get('key')
+    result = app.results.get(key)
     if result:
         return Response(result, mimetype='image/png')
     else:
@@ -97,7 +97,7 @@ def result():
 
 def read_results():
     def handler(msg):
-        results[msg.key().decode("ascii")] = msg.value()
+        app.results[msg.key().decode("ascii")] = msg.value()
 
     run_consumer("manager-results", handler)
 
@@ -105,6 +105,7 @@ def read_results():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO,
                         format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
-    Thread(target=read_results).start()
 
-    app.run(host='0.0.0.0', debug=True)
+    Thread(target=read_results, daemon=True).start()
+
+    app.run(host='0.0.0.0', use_reloader=False, debug=True)

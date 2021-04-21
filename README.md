@@ -25,10 +25,21 @@ Now open in your browser [http://localhost/](http://localhost/) to see the appli
 
 Upload more images to get more results. Notice that after the first result the Kafka topics have been created and there are no more log warnings. In the log, you can see messages about different services working with Kafka topics.
 
-To stop the application, press `Ctrl+C`
+To stop the application, press `Ctrl+C`.
 
 ## Running Front-End Isolated
+
+Navigate to `frontend` subfolder, and run there `docker-compose up`. 
+
+After it starts, open [http://localhost/](http://localhost/) in your browser
+
+[http://localhost:8000/](http://localhost:8000/)
 
 ## Running Job Manager Isolated
 
 ## Running Grayscaler Isolated
+
+
+## Running Without `docker-compose`
+
+`docker run -d -it -p 9092:9092 up9inc/mockintosh:self-contained-kafka`

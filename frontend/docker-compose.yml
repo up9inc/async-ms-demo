@@ -53,5 +53,6 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
+    tmpfs: "/tmp/kafka-logs"
 
 version: "3.3"
