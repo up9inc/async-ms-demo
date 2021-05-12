@@ -48,6 +48,8 @@ services:
       - SETGID
       - SETUID
       - DAC_OVERRIDE
-    tmpfs: "/tmp/kafka-logs"
+    tmpfs:
+    - /tmp/kafka-logs
+    - /tmp/zookeeper
 
 version: "3"

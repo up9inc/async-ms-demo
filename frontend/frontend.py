@@ -77,7 +77,7 @@ def post():
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
     img_byte_arr = img_byte_arr.getvalue()
-    assert len(img_byte_arr) < 1024 * 1024, "Image size has to be smaller than 1MB"
+    assert len(img_byte_arr) < 1024 * 1024, "Image is too large"
 
     key = "fe-%s" % time.time()
     logging.info("Starting job: %s", key)
