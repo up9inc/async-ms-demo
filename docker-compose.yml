@@ -18,6 +18,8 @@ services:
       - DAC_OVERRIDE
     environment:
       KAFKA: kafka:9092
+    tmpfs:
+      - /tmp
   manager:
     build:
       context: manager
@@ -38,7 +40,7 @@ services:
     build:
       context: kafka
     hostname: kafka
-    restart: "no"
+    restart: "always"
     environment:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
     cap_drop:

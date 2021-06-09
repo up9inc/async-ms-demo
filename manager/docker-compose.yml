@@ -8,7 +8,7 @@ services:
       KAFKA: kafka:9092
 
   mockintosh:
-    image: up9inc/mockintosh:unstable  # FIXME: use latest once released
+    image: up9inc/mockintosh:latest
     read_only: true
     restart: "no"
     command: /config/mockintosh.yml
@@ -32,7 +32,7 @@ services:
     build:
       context: ../kafka
     hostname: kafka
-    restart: "no"
+    restart: "always"
     environment:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
     cap_drop:
