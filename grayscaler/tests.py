@@ -12,12 +12,14 @@ class Tests(unittest.TestCase):
         # trigger the job
         requests.post("http://localhost:8000/async/producers/Job-Trigger").raise_for_status()
 
+        # wait for expected message publish
         for _ in range(10):
             time.sleep(1)
             resp = requests.get("http://localhost:8000/async/consumers/Result-Validator")
             resp.raise_for_status()
             har = resp.json()
             if har['log']['entries']:
+                print("Captured message:")
                 print(har['log']['entries'][0]['response']['content']['text'])
                 break
         else:
